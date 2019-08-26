@@ -2,11 +2,14 @@ extends layout
 
 block content
   h1= title
-  h1 Books
-  //- include bogus
-  p
-    a(href="/books/new") Add A New Book
-    input(type="text" placeholder='Search...')
+
+  form(method='action', action='/books/search')
+    a.button.nav(href="/books/new") Create New Book
+    input(for='search' type='text', name='search', placeholder='Search..')
+    input(type='submit', value='Search', id="searchSubmit")
+    a.button(href="/books") Go Home
+
+
   table
     thead
       tr
@@ -22,16 +25,43 @@ block content
         td= book.author
         td= book.genre
         td= book.year
-//- extends layout
 
-//- block content
-//-   h1= title
-//-   p Listing all books
-//-   p
-//-     a(href="/books/new") Create New Book
-  
-//-   each book in books
-//-     h2= book.title
-//-     include by_line
-//-     //- p= book.shortDescription()
-//-     a(href = "/books/" + book.id) Read More &rarr;
+  .pagination
+    - let page=1;
+    while page <= pages
+      a(href=`/books?query=${query?query:""}&page=${page}` class=`${activePage===page ? "active" : ""}`)= page
+      - page += 1;
+
+            
+  //- div.pagination
+  //-     -for(var i=1; i<=totalPages; i++)
+  //-         a.button(href= `/books/page=${i}`)= i
+  //- p
+  //-   a.button(href=`/books/page/` + pagePrevious) Previous
+  //- p
+  //-   a.button(href=`/books/page/` + page) Next
+  //- div.pagination
+  //-   -for(let i=1; i<=totalPages; i++)
+  //-     a.button(href= `/books/page=${i}`)= i
+
+  //- - var n = 1;
+  //-       ul(class='pagination')
+  //-         while n <= totalPages
+  //-           li
+  //-             if(n == pageNumber)
+  //-               a(class='active', href='/books/page=' + n)= n++
+  //-             else
+  //-               a(href='/books/page=' + n)= n++
+  //- //- div
+  //-   ul#bttnList
+  //-     each val in bttns
+  //-       li#pageBttn
+  //-         form(action=`books?page=${val}`, method="post")
+  //-           input(type='submit', value=`${val}`) 
+
+  //- div.pagination
+  //-   -for(var i=1; i<=totalPages; i++)
+  //-     a.button(href= `/books/?column=${column}&searchKeyWord=${searchKeyWord}&&page=${i}`)= i
+
+    //- div.links
+    //-   script(src='/static/js/app.js')

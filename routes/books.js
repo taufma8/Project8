@@ -1,23 +1,73 @@
 const express = require('express');
 const router = express.Router();
 const Book = require("../models").Book;
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
+const sequelize = new Sequelize({
+  dialect: 'sqlite',
+  storage: 'library.db'
+});
 
 /* GET books listing. */
-router.get('/', function(req, res, next) {
-  Book.findAll({order: [["title", "ASC"]]}).then(function(books){
-    // console.log("Start: Render index of books");
-    res.render("index", { books, title: "Maliha's Awesome Library" });
-    // console.log("End: Render index of books");
-  }).catch(function(err){
-    err.statusCode = err.statusCode || 500;
-    throw err;
-    // res.send(500);
-  });
+
+router.get("/", async (req, res, next) => {
+  try {
+    const booksPerPage = 5;
+    const query = req.query.query ? req.query.query : "";
+    const numPages = await Book.getNumPages(query, booksPerPage);
+    const activePage = req.query.page ? parseInt(req.query.page): (numPages === 0 ? 0: 1);
+    if (activePage > numPages || activePage < 0) {
+      return next();
+    }
+    const books = await Book.findByQueryAndPagination(
+      query,
+      booksPerPage,
+      activePage
+    );
+    res.locals.books = books;
+    res.locals.title = "Books";
+    res.locals.pages = numPages;
+    res.locals.query = query;
+    res.locals.activePage = activePage;
+    res.render("index");
+  } catch (err) {
+    return next(err);
+  }
 });
+
+
+//GET search book
+router.get('/search', (req, res) => {
+  // assign search term in lower case
+  const query = req.query.search.toLowerCase();
+
+  Book.findAll({
+      where: {
+          [Op.or]: [
+              sequelize.where(
+                  sequelize.fn('lower', sequelize.col('title')),
+                  { [Op.like]: '%' + query + '%' },
+              ),
+              sequelize.where(
+                  sequelize.fn('lower', sequelize.col('author')),
+                  { [Op.like]: '%' + query + '%' },
+              ),
+              sequelize.where(
+                  sequelize.fn('lower', sequelize.col('genre')),
+                  { [Op.like]: '%' + query + '%' },
+              ),
+              sequelize.where(
+                  sequelize.fn('lower', sequelize.col('year')),
+                  { [Op.like]: '%' + query + '%' },
+              )
+          ]
+      }
+  }).then(books => res.render('index', { books }));
+});
+
 
 /* POST create book. */
 router.post('/new', function(req, res, next) {
-  // let {title, author, genre, year} = req.body;
   Book.create(req.body).then(function(book){
     res.redirect("/books/" + book.id);
   }).catch(function(err){
@@ -35,8 +85,7 @@ router.post('/new', function(req, res, next) {
   });
 });
 
-/* Create a new book form. */
-router.get('/new', function(req, res, next) {
+router.get('/new', function(req, res) {
   res.render("new", {book: Book.build(), title: "New Book"});
 });
 
@@ -63,7 +112,7 @@ router.get('/:id/delete', function (req, res, next) {
       res.send(404);
     }
   }).catch(function(err){
-    // res.send(500);
+    res.send(500);
   });
 });
 
@@ -75,10 +124,11 @@ router.get('/:id', function(req, res, next) {
       res.render('show', { book, title: book.title });
     } else {
       res.send(404);
+      console.log('This id does not exist. Please try again.');
     }
   }).catch(function(err){
-    // res.send(500);
-    res.render('page-not-found')
+    res.send(500);
+    res.render('page-not-found');
   });
 });
 
@@ -110,14 +160,6 @@ router.post('/:id/edit', function (req, res, next) {
     res.render('error', {err});
   });
 });
-// router.put("/:id", function(req, res, next){
-//   const book = find(req.params.id);
-//   book.title = req.body.title;
-//   book.body = req.body.body;
-//   book.author = req.body.author;
-  
-//   res.redirect("/books/" + book.id);    
-// });
 
 /* DELETE individual book. */
 //destroy method returns a promise. once the promise is fulfilled, then we redirect to the books path.
@@ -134,70 +176,5 @@ router.post('/:id/delete', function (req, res, next) {
     res.send(500);
   });
 });
-// router.delete("/:id", function(req, res, next){
-//   const book = find(req.params.id);  
-//   const index = books.indexOf(book);
-//   books.splice(index, 1);
-
-//   res.redirect("/books");
-// });
-
 
 module.exports = router;
-// //Setting up to use the db folder we created.
-// // const db = require('./db');
-// // const { Book } = db.models;
-
-// //Setting up express
-// const express = require('express');
-// const router = express.Router();
-
-// //Setting up sequelize
-// const Sequelize = require('sequelize');
-
-// //Adding routes and sending strings to the client.
-// //Merges the data with the templates to surf dynamic pages.
-// //Home route should redirect to the /books route.
-// // router.get('/', (req, res, next) => {
-// //     res.redirect('/books')
-// // });
-
-// //Shows the full list of books.
-// router.get('/books', (req, res, next) => {
-//     res.render('index', {book})
-// });
-
-// //Shows the create new book form.
-// router.get('/books/new', (req, res, next) => {
-//     res.render('/db/models/books/new');
-// });
-  
-// //Posts a new book to the database.
-// router.post('/books/new', async (req, res, next) => {
-//     const book = await Book.create(req.body);
-//     res.render('/db/models/books/:id');
-// });
-
-// //Shows book detail form.
-// router.get('/books/:id', async (req, res, next) => {
-//     res.render('/db/models/books/:id');
-// });
-  
-// //Updates book info in the database.
-// router.post('/books/:id/edit', async (req, res, next) => {
-//     const book = await Book.findByPk(req.params.id);
-//     res.render('/db/models/books/edit', {book, title: 'Edit Book'});
-// });
-  
-// //Deletes a book. 
-// router.post('/books/:id/delete', async (req, res,) => {
-//     const bookToDelete = await Book.findByPk(req.params.id);
-//     await bookToDelete.destroy();
-//     res.render('/db/models/books');
-// });
-
-// // router.listen(3000, () => {
-// //     console.log('The application is running on localhost:3000!');
-// // });
-
-// module.exports = router;

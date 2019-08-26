@@ -1,4 +1,5 @@
 'use strict';
+const Sequelize = require("sequelize");
 
 // const dateFormat = require('dateformat');
 
@@ -27,22 +28,54 @@ module.exports = (sequelize, DataTypes) => {
     // associations can be defined here
   };
 
+// Renders the page with all books retreived based on the current page and search query
+
+  Book.getNumPages = async function(query, perPage) {
+    try {
+      const Op = Sequelize.Op;
+      const totalRecords = await this.count({
+        where: {
+          [Op.or]: [
+            { title: { [Op.substring]: query } },
+            { genre: { [Op.substring]: query } },
+            { year: { [Op.substring]: query } },
+            { author: { [Op.substring]: query } }
+          ]
+        },
+        order: [["title", "ASC"]]
+      });
+
+      return Math.ceil(totalRecords / perPage);
+    } catch (err) {
+      throw new Error("Error getting pages");
+    }
+  };
+
+//returns all records based on query, the current page, and books per page
+  Book.findByQueryAndPagination = async function(
+    query,
+    booksPerPage,
+    currentPage
+  ) {
+    try {
+      const Op = Sequelize.Op;
+      return await this.findAll({
+        where: {
+          [Op.or]: [
+            { title: { [Op.substring]: query } },
+            { genre: { [Op.substring]: query } },
+            { year: { [Op.substring]: query } },
+            { author: { [Op.substring]: query } }
+          ]
+        },
+        order: [["title", "ASC"]],
+        limit: booksPerPage,
+        offset: (currentPage - 1) * booksPerPage
+      });
+    } catch (err) {
+      throw err;
+    }
+  };
+
   return Book;
 };
-  //   classMethods: {
-  //     associate: function (models) {
-  //         //associations can be defined here
-  //     }
-  //   },
-  //   instanceMethods: {
-  //     publishedAt: function () {
-  //       return dateFormat(this.createdAt, "dddd, mmmm dS, yyyy, h:MM TT");
-  //     },
-  //     shortDescription: function(){ 
-  //       return this.body.length > 30 ? this.body.substr(0, 30) + "..." : this.body;
-  //     }
-  //   }
-  // });
- 
-  // return Book;
-// };

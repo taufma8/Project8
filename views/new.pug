@@ -13,16 +13,19 @@ block content
     div.form-group
       label(for='title') Title:
       input(id='title', type='text', name='title' value=book.title)
+    p
     div.form-group
       label(for='author') Author:
       input(id='author', type='text', name='author' value=book.author)
+    p
     div.form-group
       label(for='genre') Genre:
       input(id='genre', type='text', name='genre' value=book.genre)
+    p
     div.form-group
       label(for='year') Year:
       input(id='year', type='text', name='year' value=book.year)
-    button.btn.btn-primary(type='submit', value='Update Book') Create New Book
-    
-    p.
-    a(href="/books") Cancel
+    p
+      input(type="submit" value="Create New Book")    
+    p
+      a.button(href="/books") Cancel
