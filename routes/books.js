@@ -9,7 +9,6 @@ const sequelize = new Sequelize({
 });
 
 /* GET books listing. */
-
 router.get("/", async (req, res, next) => {
   try {
     const booksPerPage = 5;
@@ -25,7 +24,7 @@ router.get("/", async (req, res, next) => {
       activePage
     );
     res.locals.books = books;
-    res.locals.title = "Books";
+    res.locals.title = "Maliha's Awesome Library";
     res.locals.pages = numPages;
     res.locals.query = query;
     res.locals.activePage = activePage;
@@ -36,9 +35,8 @@ router.get("/", async (req, res, next) => {
 });
 
 
-//GET search book
+/* GET search book. */
 router.get('/search', (req, res) => {
-  // assign search term in lower case
   const query = req.query.search.toLowerCase();
 
   Book.findAll({

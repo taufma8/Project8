@@ -10,7 +10,7 @@ const app = express();
 // view engine setup
 app.set('view engine', 'pug');
 
-// uncomment after placing your favicon in /public
+//setting up middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use("/static", express.static('public'));
